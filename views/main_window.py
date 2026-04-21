@@ -163,6 +163,7 @@ class MainWindow(QMainWindow):
         title, page_cls = page_map[page_key]
         page = page_cls(self.main_controller)
         page.refresh_requested.connect(lambda k=page_key: self._refresh_page(k))
+        page.search_requested.connect(lambda text, k=page_key: self._search_page(k, text))
         self.pages[page_key] = page
         idx = self.tabs.addTab(page, title)
         self.tabs.setCurrentIndex(idx)
@@ -189,6 +190,24 @@ class MainWindow(QMainWindow):
                 self.statusBar().showMessage(f"{result['message']} | 共 {len(result['data'])} 条记录")
             else:
                 self.statusBar().showMessage(f"加载失败: {result['message']}")
+
+    def _search_page(self, page_key, text):
+        if not text:
+            self._refresh_page(page_key)
+            return
+        search_map = {
+            "bills": self.main_controller.dynamic_search_bills,
+            "repairs": self.main_controller.dynamic_search_repairs,
+        }
+        if page_key in search_map:
+            result = search_map[page_key](text)
+            if result['success']:
+                self.pages[page_key].load_data(result['data'])
+                self.statusBar().showMessage(f"动态搜索完成 | 共 {len(result['data'])} 条记录")
+            else:
+                self.statusBar().showMessage(f"搜索失败: {result['message']}")
+        else:
+            self.statusBar().showMessage("当前页面不支持搜索功能")
 
     def _refresh_all(self):
         for key in list(self.pages.keys()):

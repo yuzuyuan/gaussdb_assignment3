@@ -21,6 +21,7 @@ class TablePage(QWidget):
     """通用表格页面，提供统一的增删改查界面"""
 
     refresh_requested = pyqtSignal()
+    search_requested = pyqtSignal(str)
 
     def __init__(self, title, columns, controller, parent=None):
         super().__init__(parent)
@@ -50,6 +51,28 @@ class TablePage(QWidget):
             QPushButton:hover { background:#1677ff; }
         """)
         top_bar.addWidget(self.add_btn)
+
+        self.search_input = QLineEdit()
+        self.search_input.setFixedWidth(220)
+        self.search_input.setFixedHeight(34)
+        self.search_input.setPlaceholderText("输入搜索条件...")
+        self.search_input.setStyleSheet("""
+            QLineEdit { border:1px solid #e5e6eb; border-radius:4px;
+                        padding:0 10px; font-size:13px; color:#1d2129; }
+            QLineEdit:focus { border-color:#4096ff; }
+        """)
+        self.search_input.returnPressed.connect(self._on_search)
+        top_bar.addWidget(self.search_input)
+
+        self.search_btn = QPushButton("搜索")
+        self.search_btn.setFixedHeight(34)
+        self.search_btn.setStyleSheet("""
+            QPushButton { background:#f2f3f5; color:#4e5969; border:1px solid #e5e6eb;
+                          border-radius:4px; padding:0 16px; font-size:13px; }
+            QPushButton:hover { background:#e5e6eb; }
+        """)
+        self.search_btn.clicked.connect(self._on_search)
+        top_bar.addWidget(self.search_btn)
 
         self.refresh_btn = QPushButton("刷新")
         self.refresh_btn.setFixedHeight(34)
@@ -87,6 +110,10 @@ class TablePage(QWidget):
 
         self.table.doubleClicked.connect(self._on_double_click)
         layout.addWidget(self.table)
+
+    def _on_search(self):
+        text = self.search_input.text().strip()
+        self.search_requested.emit(text)
 
     def load_data(self, data):
         """加载数据到表格"""
